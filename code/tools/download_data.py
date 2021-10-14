@@ -17,7 +17,7 @@ from .common_tools import  timing,datestr2int
 
 
 @timing
-def get_daily_from_pandas(ts_code, ts_market, start_datestr, end_datestr):
+def get_daily_from_pandas(stock_code, stock_market, start_datestr, end_datestr):
     
     market_map = {"sh":"SS", "sz":"SZ"}
     selected_columns = ['date','open', 'high', 'close', 'low', 'volume']
@@ -26,7 +26,7 @@ def get_daily_from_pandas(ts_code, ts_market, start_datestr, end_datestr):
     end_year, end_month, end_day = datestr2int(end_datestr)
     
     
-    query_code_name  = ".".join([ts_code, market_map[ts_market]])
+    query_code_name  = ".".join([stock_code, market_map[stock_market]])
     df = web.DataReader(query_code_name, "yahoo", datetime.datetime(start_year, start_month, start_day ), 
                                datetime.datetime(end_year, end_month, end_day ))
     
@@ -39,9 +39,9 @@ def get_daily_from_pandas(ts_code, ts_market, start_datestr, end_datestr):
 
 
 @timing
-def get_daily_from_tushare_old(ts_code,ts_market,start_datestr, end_datestr):
+def get_daily_from_tushare_old(stock_code,stock_market,start_datestr, end_datestr):
     selected_columns = ['date','open', 'close', 'high', 'low', 'volume']
-    df = ts.get_hist_data(ts_code, start = start_datestr, end = end_datestr, retry_count=3, pause = 1e-3, ktype = "D")
+    df = ts.get_hist_data(stock_code, start = start_datestr, end = end_datestr, retry_count=3, pause = 1e-3, ktype = "D")
     df = df.reset_index()
     
     df = df[selected_columns]
@@ -55,7 +55,7 @@ def get_daily_from_tushare_old(ts_code,ts_market,start_datestr, end_datestr):
 
 
 @timing
-def get_daily_from_baostock(ts_code,ts_market,start_datestr, end_datestr):
+def get_daily_from_baostock(stock_code,stock_market,start_datestr, end_datestr):
     lg = bs.login()
 
     print('login respond error_code:'+lg.error_code)
@@ -63,7 +63,7 @@ def get_daily_from_baostock(ts_code,ts_market,start_datestr, end_datestr):
     
     fields = "date,open,close,high,low,volume"
     
-    query_code_name  = ".".join([ts_market, ts_code])
+    query_code_name  = ".".join([stock_market, stock_code])
     
     # adjustflag：复权类型，默认不复权：3；1：后复权；2：前复权。已支持分钟线、日线、周线、月线前后复权。
     # frequency：数据类型，默认为d，日k线；d=日k线、w=周、m=月、5=5分钟、15=15分钟、30=30分钟、60=60分钟k线数据，不区分大小写
