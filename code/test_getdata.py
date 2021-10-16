@@ -134,3 +134,64 @@ result_profit.to_csv("D:\\dupont_data.csv", encoding="gbk", index=False)
 
 # 登出系统
 bs.logout()
+
+
+
+#%%
+
+
+
+    
+    
+import re,urllib
+import xlwt
+from bs4 import BeautifulSoup
+from time import sleep
+import io
+
+
+def get_profit_from_wangyi(stock_code):
+    """
+    https://www.jianshu.com/p/99b7f42c61f9
+    """
+
+    url = 'http://quotes.money.163.com/service/lrb_'+str(stock_code)+'.html'
+    while True:
+        try:
+            content = urllib.request.urlopen(url,timeout=2).read()
+            content = content.decode("gbk","ignore")
+            
+            data = io.StringIO(content)
+            df = pd.read_csv(data, sep=",")
+            
+            break
+        except Exception as e:
+            if str(e) =='HTTP Error 404: Not Found':
+                break
+            else:
+                print(e)
+                continue
+    return df
+
+
+df = get_profit_from_wangyi(600000)
+df2 = df.T
+df3 = df2.reset_index()
+
+new_header = df3.iloc[0] #grab the first row for the header
+df4 = df3[1:] #take the data less the header row
+df4.columns = new_header #set the header row as the df header
+
+
+
+# 1. rename 2. remove unusual datas, 投入
+df4 =df4.rename(columns= {"报告日期":"stat_date",
+                          "营业总收入(万元)":"total_income",
+                          "利润总额(万元)":"total_profit",
+                          "净利润(万元)":"net_profit"})
+
+selected_fields = ["stat_date","total_income","total_profit","net_profit"]
+
+df4 = df4[selected_fields]
+
+print(df)

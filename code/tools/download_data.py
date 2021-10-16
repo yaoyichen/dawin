@@ -84,6 +84,10 @@ def get_daily_from_baostock(stock_code,stock_market,start_datestr, end_datestr):
     bs.logout()
     
     return df
+
+
+def get_daily_from_wangyi(stock_code,stock_market,start_datestr, end_datestr):
+    pass
     
 
 def main():

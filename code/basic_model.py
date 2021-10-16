@@ -12,7 +12,19 @@ import torch.nn as nn
 import time
 from tools.download_data import *
 
+"""
+target on sh000300, find an easy model to predict
+"""
 
+class Args:
+    adjoint = False
+
+args = Args()
+
+if args.adjoint:
+    from torchdiffeq import odeint_adjoint as odeint
+else:
+    from torchdiffeq import odeint
 
 download = False
 if(download):
