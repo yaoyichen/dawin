@@ -6,7 +6,7 @@ Created on Mon Oct 11 21:02:42 2021
 @author: yao
 """
 from tools.download_data import *
-from tools.common_tools import  timing
+from tools.common_tools import  timing,check_valid_date
 
 
 start_datestr, end_datestr = "2020-01-01", "2021-01-01"
@@ -153,6 +153,7 @@ import io
 def get_profit_from_wangyi(stock_code):
     """
     https://www.jianshu.com/p/99b7f42c61f9
+    [https://blog.csdn.net/u014595019/article/details/48445223](https://blog.csdn.net/u014595019/article/details/48445223)
     """
 
     url = 'http://quotes.money.163.com/service/lrb_'+str(stock_code)+'.html'
@@ -164,34 +165,191 @@ def get_profit_from_wangyi(stock_code):
             data = io.StringIO(content)
             df = pd.read_csv(data, sep=",")
             
+            df = df.T
+            df = df.reset_index()
+            
+            new_header = df.iloc[0] #grab the first row for the header
+            df = df[1:] #take the data less the header row
+            df.columns = new_header #set the header row as the df header
+            
+            
+            
+            # 1. rename 2. remove unusual datas, 
+            df =df.rename(columns= {"报告日期":"stat_date",
+                                      "营业总收入(万元)":"total_income",
+                                      "利润总额(万元)":"total_profit",
+                                      "净利润(万元)":"net_profit"})
+            
+            selected_fields = ["stat_date","total_income","net_profit"]
+            
+            df = df[selected_fields]
+            
+            
+            
+            df = df[df['stat_date'].apply(remove_unusual_date) != 0]
+            
+            
+            df.stat_date = pd.to_datetime(df.stat_date)
+
+            for column_name in ["total_income","total_profit","net_profit"]:
+                df[column_name] = df[[column_name]].astype("float64")
+            
+            
+            
+            df = df.sort_values(by = ["stat_date"] ,ascending = True)
+            df.reset_index(inplace=True, drop= True)
+            
             break
         except Exception as e:
             if str(e) =='HTTP Error 404: Not Found':
                 break
             else:
                 print(e)
+                sleep(1)
                 continue
     return df
 
 
-df = get_profit_from_wangyi(600000)
-df2 = df.T
-df3 = df2.reset_index()
-
-new_header = df3.iloc[0] #grab the first row for the header
-df4 = df3[1:] #take the data less the header row
-df4.columns = new_header #set the header row as the df header
 
 
-
-# 1. rename 2. remove unusual datas, 投入
-df4 =df4.rename(columns= {"报告日期":"stat_date",
-                          "营业总收入(万元)":"total_income",
-                          "利润总额(万元)":"total_profit",
-                          "净利润(万元)":"net_profit"})
-
-selected_fields = ["stat_date","total_income","total_profit","net_profit"]
-
-df4 = df4[selected_fields]
 
 print(df)
+
+
+
+
+#%%
+def get_asset_from_wangyi(stock_code):
+    """
+    https://www.jianshu.com/p/99b7f42c61f9
+    原始的 固定资产(万元)，负债合计(万元) 这两个单位为元
+    """
+
+    url = 'http://quotes.money.163.com/service/zcfzb_'+str(stock_code)+'.html'
+    while True:
+        try:
+            content = urllib.request.urlopen(url,timeout=2).read()
+            content = content.decode("gbk","ignore")
+            
+            data = io.StringIO(content)
+            df = pd.read_csv(data, sep=",")
+            
+            
+            
+            df = df.T
+            df = df.reset_index()
+            
+            new_header = df.iloc[0] #grab the first row for the header
+            df = df[1:] #take the data less the header row
+            df.columns = new_header #set the header row as the df header
+            
+            
+            
+            # 1. rename 2. remove unusual datas, 
+            df =df.rename(columns= {"报告日期":"stat_date",
+                                      "固定资产(万元)":"fixed_asset",
+                                      "负债合计(万元)":"total_debt",
+                                      "资产总计(万元)":"total_asset"})
+            
+            selected_fields = ["stat_date","fixed_asset","total_debt","total_asset"]
+            
+            df = df[selected_fields]
+            
+            
+            
+            df = df[df['stat_date'].apply(remove_unusual_date) != 0]
+            
+            
+            df.stat_date = pd.to_datetime(df.stat_date)
+            
+            
+            for column_name in ["fixed_asset","total_debt","total_asset"]:
+                df[column_name] = df[[column_name]].astype("float64")
+            
+            df = df.sort_values(by = ["stat_date"] ,ascending = True)
+            df.reset_index(inplace=True, drop= True)
+            
+            df["total_debt"] = df["total_debt"]
+            df["total_asset"] = df["total_asset"]
+            
+
+            break
+        except Exception as e:
+            if str(e) =='HTTP Error 404: Not Found':
+                break
+            else:
+                print(e)
+                sleep(1)
+                continue
+                print(e)
+                continue
+            
+    return df
+
+df = get_profit_from_wangyi(600000)
+df2 = get_asset_from_wangyi(600000)
+
+
+
+#%%
+def get_finance_index_from_wangyi(stock_code):
+    """
+    https://www.jianshu.com/p/99b7f42c61f9
+
+    """
+
+    url = 'http://quotes.money.163.com/service/zycwzb_'+str(stock_code)+'.html?type=report'
+    while True:
+        try:
+            content = urllib.request.urlopen(url,timeout=2).read()
+            content = content.decode("gbk","ignore")
+            
+            data = io.StringIO(content)
+            df = pd.read_csv(data, sep=",")
+            
+            print(df)
+
+            break
+        except Exception as e:
+            if str(e) =='HTTP Error 404: Not Found':
+                break
+            else:
+                print(e)
+                sleep(1)
+                continue
+    return df
+
+df = get_finance_index_from_wangyi(600000)
+
+
+
+#%%
+def get_cash_from_wangyi(stock_code):
+    """
+    https://www.jianshu.com/p/99b7f42c61f9
+    """
+
+    url = 'http://quotes.money.163.com/service/xjllb_'+str(stock_code)+'.html'
+    while True:
+        try:
+            content = urllib.request.urlopen(url,timeout=2).read()
+            content = content.decode("gbk","ignore")
+            
+            data = io.StringIO(content)
+            df = pd.read_csv(data, sep=",")
+            
+            print(df)
+
+            break
+        except Exception as e:
+            if str(e) =='HTTP Error 404: Not Found':
+                break
+            
+            else:
+                print(e)
+                sleep(1)
+                continue
+    return df
+
+
+df = get_cash_from_wangyi(600000)
