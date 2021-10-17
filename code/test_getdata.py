@@ -154,6 +154,7 @@ def get_profit_from_wangyi(stock_code):
     """
     https://www.jianshu.com/p/99b7f42c61f9
     [https://blog.csdn.net/u014595019/article/details/48445223](https://blog.csdn.net/u014595019/article/details/48445223)
+    获得利润表上的信息
     """
 
     url = 'http://quotes.money.163.com/service/lrb_'+str(stock_code)+'.html'
@@ -186,12 +187,12 @@ def get_profit_from_wangyi(stock_code):
             
             
             
-            df = df[df['stat_date'].apply(remove_unusual_date) != 0]
+            df = df[df['stat_date'].apply(check_valid_date) != 0]
             
             
             df.stat_date = pd.to_datetime(df.stat_date)
 
-            for column_name in ["total_income","total_profit","net_profit"]:
+            for column_name in ["total_income","net_profit"]:
                 df[column_name] = df[[column_name]].astype("float64")
             
             
@@ -213,16 +214,12 @@ def get_profit_from_wangyi(stock_code):
 
 
 
-print(df)
-
-
-
-
 #%%
 def get_asset_from_wangyi(stock_code):
     """
     https://www.jianshu.com/p/99b7f42c61f9
-    原始的 固定资产(万元)，负债合计(万元) 这两个单位为元
+    获得资产负债表上的信息
+    原始的 固定资产(万元)，负债合计(万元) 
     """
 
     url = 'http://quotes.money.163.com/service/zcfzb_'+str(stock_code)+'.html'
@@ -257,7 +254,7 @@ def get_asset_from_wangyi(stock_code):
             
             
             
-            df = df[df['stat_date'].apply(remove_unusual_date) != 0]
+            df = df[df['stat_date'].apply(check_valid_date) != 0]
             
             
             df.stat_date = pd.to_datetime(df.stat_date)
@@ -297,7 +294,6 @@ def get_finance_index_from_wangyi(stock_code):
     https://www.jianshu.com/p/99b7f42c61f9
 
     """
-
     url = 'http://quotes.money.163.com/service/zycwzb_'+str(stock_code)+'.html?type=report'
     while True:
         try:
@@ -327,6 +323,7 @@ df = get_finance_index_from_wangyi(600000)
 def get_cash_from_wangyi(stock_code):
     """
     https://www.jianshu.com/p/99b7f42c61f9
+    获得现金流表上的信息
     """
 
     url = 'http://quotes.money.163.com/service/xjllb_'+str(stock_code)+'.html'
@@ -337,7 +334,38 @@ def get_cash_from_wangyi(stock_code):
             
             data = io.StringIO(content)
             df = pd.read_csv(data, sep=",")
+
+            df = df.T
+            df = df.reset_index()
             
+            new_header = df.iloc[0] #grab the first row for the header
+            df = df[1:] #take the data less the header row
+            df.columns = new_header #set the header row as the df header
+            df.columns = [name.strip() for name in df.columns]
+            
+            
+            # 1. rename 2. remove unusual datas, 
+            df =df.rename(columns= {"报告日期":"stat_date",
+                                      "现金的期末余额(万元)":"cash_after"})
+            
+            selected_fields = ["stat_date","cash_after"]
+            
+            df = df[selected_fields]
+            
+            
+            
+            df = df[df['stat_date'].apply(check_valid_date) != 0]
+            
+            
+            df.stat_date = pd.to_datetime(df.stat_date)
+            
+            
+            for column_name in ["cash_after"]:
+                df[column_name] = df[[column_name]].astype("float64")
+            
+            df = df.sort_values(by = ["stat_date"] ,ascending = True)
+            df.reset_index(inplace=True, drop= True)
+                  
             print(df)
 
             break
@@ -351,5 +379,13 @@ def get_cash_from_wangyi(stock_code):
                 continue
     return df
 
+df_asset = get_asset_from_wangyi(600000)
+df_cash = get_cash_from_wangyi(600000)
+df_profit = get_profit_from_wangyi(600000)
 
-df = get_cash_from_wangyi(600000)
+
+df_finance_1 = pd.merge(df_asset, df_cash, on = ["stat_date"], how = "outer")
+df_finance_2 = pd.merge(df_finance_1, df_profit, on = ["stat_date"], how = "outer")
+
+df_finance_2 = df_finance_2.sort_values(by = ["stat_date"] ,ascending = True)
+df_finance_2.reset_index(inplace=True, drop= True)
