@@ -13,7 +13,16 @@ import sys
 import datetime
 import backtrader as bt
 
+
+
+import matplotlib
+import matplotlib.pyplot as plt
 from tools.download_data import *
+
+matplotlib.use('Qt5Agg')
+plt.switch_backend('Qt5Agg')
+
+
 
 
 
@@ -39,7 +48,7 @@ result3.to_csv("../data/600000.csv", index=True)
 class TestStrategy(bt.Strategy):
 
     def log(self, txt, dt=None):
-        ''' Logging function for this strategy'''
+        ''' Logging function fot this strategy'''
         dt = dt or self.datas[0].datetime.date(0)
         print('%s, %s' % (dt.isoformat(), txt))
 
@@ -51,6 +60,15 @@ class TestStrategy(bt.Strategy):
         # Simply log the closing price of the series from the reference
         self.log('Close, {:.2f}, {:.2f}'.format(self.dataclose[0],  self.dataclose[-1]))
 
+        if self.dataclose[0] < self.dataclose[-1]:
+            # current close less than previous close
+
+            if self.dataclose[-1] < self.dataclose[-2]:
+                # previous close less than the previous close
+
+                # BUY, BUY, BUY!!! (with all possible default parameters)
+                self.log('BUY CREATE, %.2f' % self.dataclose[0])
+                self.buy()
         
 
 cerebro = bt.Cerebro()
@@ -67,7 +85,7 @@ data = bt.feeds.YahooFinanceCSVData(
     # Do not pass values before this date
     fromdate=datetime.datetime(2020, 1, 1),
     # Do not pass values after this date
-    todate=datetime.datetime(2020 ,12, 31),
+    todate=datetime.datetime(2021 ,1, 1),
     reverse=False)
 
 
@@ -91,5 +109,12 @@ cerebro.broker.setcash(100000.0)
 print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
 
 cerebro.run()
+# cerebro.plot(height= 30,iplot=False)
+# cerebro.plot(iplot=False,volume=False, savefig=True, figfilename='backtrader-plot.png')
+
+
+figure = cerebro.plot(height= 50,style = 'candlebars',iplot=False)[0][0]
+figure.savefig('example.png')
+
 
 print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
