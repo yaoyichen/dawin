@@ -5,11 +5,12 @@ Created on Mon Oct 11 21:02:42 2021
 
 @author: yao
 """
+import os
 from tools.download_data import *
 from tools.common_tools import  timing,check_valid_date
 
 
-start_datestr, end_datestr = "2020-01-01", "2021-01-01"
+start_datestr, end_datestr = "2015-01-01", "2021-02-01"
 stock_code = "600000"
 stock_market = "sh"  # "sh,sz"
 
