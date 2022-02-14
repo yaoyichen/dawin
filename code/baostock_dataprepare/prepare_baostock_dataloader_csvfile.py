@@ -9,11 +9,14 @@ Created on Wed Feb  9 23:38:03 2022
 import pandas as pd
 import os
 import numpy as np
+import pickle
 
 # shift span of the data
 
 
 data_dir = "/home/yao/project/dawin/data/baostock_daily/hasvolume_data"
+
+#%%
 padding_span = 60
 shift_span = 21
 feature_span = 120
@@ -71,3 +74,25 @@ test_df = pd.DataFrame(data={"code":test_code_list,
 
 train_df.to_csv("baostock_list_train.csv", index = False)
 test_df.to_csv("baostock_list_test.csv", index = False)
+
+
+
+#%%
+start_dict = {}
+df_all = pd.DataFrame()
+file_list = os.listdir(data_dir)
+start_index = 0
+for file in file_list:
+    print(file)
+    df = pd.read_csv(os.path.join(data_dir, file))
+    df_all = pd.concat([df_all, df])
+    start_dict[file] = [start_index, start_index+len(df)]
+    start_index = start_index+ len(df)
+
+dict_file = open("file_index_map.pkl",'wb')
+pickle.dump(start_dict, dict_file)    
+df_all = df_all.reset_index(drop = True)
+
+df_all.to_csv("baostock_all.csv", index = False)
+    
+    

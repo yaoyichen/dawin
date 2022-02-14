@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+dr#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Wed Feb  9 23:24:16 2022
@@ -18,12 +18,14 @@ def remove_df_zero_volume(df,column_name):
 
 
 data_dir = "/home/yao/project/dawin/data/baostock_daily/"
-shift_span = 20
+
 
 file_list = os.listdir(os.path.join(data_dir,"origin_data"))
 
 for file in file_list:
+    print(file)
     df = pd.read_csv(os.path.join(data_dir,"origin_data",file))
+    df = remove_df_zero_volume(df,"volume")
     df.to_csv(os.path.join(data_dir,"hasvolume_data",file))
     
     
