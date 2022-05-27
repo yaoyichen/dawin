@@ -5,22 +5,28 @@ Created on Mon Oct 11 21:02:42 2021
 
 @author: yao
 """
+#%%
+import sys 
+sys.path.append("..") 
 import os
 from tools.download_data import *
 from tools.common_tools import  timing,check_valid_date
 
 
-start_datestr, end_datestr = "2015-01-01", "2021-02-01"
-stock_code = "600000"
-stock_market = "sh"  # "sh,sz"
+start_datestr, end_datestr = "2015-01-01", "2022-05-28"
+stock_code = "002468"
+stock_market = "sz"  # "sh,sz"
 
 
 result3 = get_daily_from_baostock(stock_code,stock_market,start_datestr, end_datestr)
+
+#%%
 
 
 #%%
 import baostock as bs
 import pandas as pd
+
 
 @timing
 def get_profit_data_from_baostock(stock_code,stock_market,year, quarter):

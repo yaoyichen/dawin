@@ -12,6 +12,8 @@ https://cloud.tencent.com/developer/article/1702300
 import smtplib  # 导入PyEmail
 from email.mime.text import MIMEText
 import time
+# import schedule
+import datetime
 
 class Send_Message():
 
@@ -36,3 +38,23 @@ class Send_Message():
         smtp.sendmail(self.sender, [self.recver], message.as_string())  # as_string 对 message 的消息进行了封装
         smtp.close()
         print("发送邮件成功！！")
+
+
+
+def sample_sendemail():
+    """
+    发送邮件给自己,可以指定主题和内容
+    """
+    send_message = Send_Message()
+
+    time.sleep(1)
+
+    current_time = str(datetime.datetime.now())
+    print(type(current_time))
+    print(current_time)
+    send_message.send_to_myself(subject = "a",content =  current_time)
+    return 0
+
+
+if __name__ == "__main__":
+    sample_sendemail()

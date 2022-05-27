@@ -29,6 +29,7 @@ def timing(f):
 
 def datestr2int(datestr):
     """
+    
     return year, month day
     """
     datetime_date = datetime.datetime.strptime(datestr, '%Y-%m-%d')
@@ -38,6 +39,7 @@ def datestr2int(datestr):
 
 def check_valid_date(date_string):
     """
+    校验是否和合法日期
     date_string = '12-25-2018'
     
     """

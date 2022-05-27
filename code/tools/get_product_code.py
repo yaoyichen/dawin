@@ -1,10 +1,14 @@
 
 
+#%%
 import baostock as bs
 import pandas as pd
 
 
 def get_hs300_list():
+    """
+    返回沪深300的指标股 
+    """
     # 登陆系统
     lg = bs.login()
     # 显示登陆返回信息
@@ -36,3 +40,4 @@ def get_hs300_list():
 result = get_hs300_list()
     
     
+# %%

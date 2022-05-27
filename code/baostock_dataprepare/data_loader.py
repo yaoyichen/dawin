@@ -24,7 +24,7 @@ import pickle
 def feature_target_1(df, feature_start_index, target_start_index, target_end_index):
     """
     normalize input
-    
+    这个已经是在生成训练数据了
     """
     input_tensor = torch.tensor(np.asarray(df.iloc[feature_start_index: target_start_index]['close']), dtype = torch.float32)
     volume_tensor = torch.tensor(np.asarray(df.iloc[feature_start_index: target_start_index]['volume']), dtype = torch.float32)
@@ -77,6 +77,9 @@ def feature_target_plot(df, feature_start_index, target_start_index, target_end_
 #%%
 
 class BaostockDailyDataset(Dataset):
+    """
+    由baostock获得的daily的数据集
+    """
     def __init__(self, data_folder, reference_file, transform=None):
         # get the stock list and total length
         self.df_ref = pd.read_csv(reference_file)
