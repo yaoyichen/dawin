@@ -159,21 +159,26 @@ class BaostockDailyDatasetPlot(Dataset):
 
 
 #%%
-data_folder = "/home/yao/project/dawin/data/baostock_daily/hasvolume_data/"
-train_reference_file = "/home/yao/project/dawin/code/baostock_dataprepare/baostock_list_train.csv"
 
-dataset_plot = BaostockDailyDatasetPlot(data_folder,train_reference_file)
-for sample_id,(data, target,weight,input_origine,output_origine) in enumerate(dataset_plot):
+def test():
+    data_folder = "/home/yao/project/dawin/data/baostock_daily/hasvolume_data/"
+    train_reference_file = "/home/yao/project/dawin/code/baostock_dataprepare/baostock_list_train.csv"
 
-    fig = plt.figure(tight_layout = True, figsize = (7,5),)
-    ax = fig.add_subplot()
-    ax.plot(np.arange(len(input_origine)),input_origine)
-    ax.plot(np.arange(len(input_origine), len(input_origine) + len(output_origine)),output_origine)
-    
-    plt.savefig("./plot_figure/plot_" + str(sample_id).zfill(5) + ".png",dpi = 500, bbox_inches = "tight")
-    plt.close(fig)
-    plt.clf()
-    plt.cla()
+    dataset_plot = BaostockDailyDatasetPlot(data_folder,train_reference_file)
+    for sample_id,(data, target,weight,input_origine,output_origine) in enumerate(dataset_plot):
+
+        fig = plt.figure(tight_layout = True, figsize = (7,5),)
+        ax = fig.add_subplot()
+        ax.plot(np.arange(len(input_origine)),input_origine)
+        ax.plot(np.arange(len(input_origine), len(input_origine) + len(output_origine)),output_origine)
+        
+        plt.savefig("./plot_figure/plot_" + str(sample_id).zfill(5) + ".png",dpi = 500, bbox_inches = "tight")
+        plt.close(fig)
+        plt.clf()
+        plt.cla()
+
+if __name__ == "__main__":
+    test()
 
     
 
