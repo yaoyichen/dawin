@@ -12,6 +12,7 @@ import datetime
 import baostock as bs
 import pandas as pd
 import tushare as ts
+import os
 
 from .common_tools import  timing, datestr2int
     
@@ -44,12 +45,23 @@ def get_daily_from_pandas(stock_code, stock_market, start_datestr, end_datestr):
 
 
 @timing
-def get_daily_from_tushare_old(stock_code,stock_market,start_datestr, end_datestr):
+def get_daily_from_tushare_old(stock_code,stock_market,start_datestr, end_datestr, frequency = "d"):
     """
     当晚17点，已经能够查到数据
+
+    code：股票代码，即6位数字代码，或者指数代码（sh=上证指数 sz=深圳成指 hs300=沪深300指数 sz50=上证50 zxb=中小板 cyb=创业板）
+    start：开始日期，格式YYYY-MM-DD
+    end：结束日期，格式YYYY-MM-DD
+    ktype：数据类型，D=日k线 W=周 M=月 5=5分钟 15=15分钟 30=30分钟 60=60分钟，默认为D,即获取某天的股票信息
+    retry_count：当网络异常后重试次数，默认为3
+
     """
+    ktype_mapping = {"d":"D","w":"W","m":"M", "5":"5" , "15":"15","60":"60"}
+
+
     selected_columns = ['date','open', 'close', 'high', 'low', 'volume']
-    df = ts.get_hist_data(stock_code, start = start_datestr, end = end_datestr, retry_count=3, pause = 1e-3, ktype = "D")
+    df = ts.get_hist_data(stock_code, start = start_datestr, end = end_datestr, retry_count=3, pause = 1e-3,
+     ktype = ktype_mapping[frequency])
     df = df.reset_index()
     
     df = df[selected_columns]
@@ -107,6 +119,25 @@ def get_daily_from_baostock(stock_code,stock_market,start_datestr, end_datestr, 
 def get_daily_from_wangyi(stock_code,stock_market,start_datestr, end_datestr):
     pass
 
+
+def get_daily(stock_code,stock_market,start_datestr, end_datestr, frequency,
+ api_platform = "baostock"):
+    if(api_platform == "baostock"):
+        # frequency：数据类型，默认为d，日k线；d=日k线、w=周、m=月、5=5分钟、15=15分钟、30=30分钟、60=60分钟k线数据
+        df = get_daily_from_baostock(stock_code,stock_market,start_datestr, end_datestr, frequency)
+    
+    if(api_platform == "tushare_old"):
+        df = get_daily_from_tushare_old(stock_code,stock_market,start_datestr, end_datestr, frequency)
+    
+    if(api_platform == "pandas"):
+        if(frequency != "day"):
+            print(f"cannot get {frequency} data from pandas dataloader")
+        else:
+            df = get_daily_from_pandas(stock_code,stock_market,start_datestr, end_datestr, frequency)
+    
+    return  df 
+
+
 #%%
 
 def main():
@@ -124,6 +155,32 @@ def main():
     return 0
 
 # %%
+
+
+
+def download_daily_data(stock_list, data_folder, start_datestr,end_datestr):
+    """
+    根据 stock_list, 通过baostock接口下载数据, 并存入 date_folder 中
+    """
+    for item in stock_list:
+        stock_market,stock_code = item.split(".")
+        result = get_daily_from_baostock(stock_code,stock_market,start_datestr, end_datestr)
+        data_dir = data_folder
+        result.to_csv(os.path.join(data_dir,f"stock_{stock_code}.csv"),index = False)
+
+
+
+# def download_5minute_data(stock_list, data_folder, start_datestr,end_datestr):
+#     """
+#     根据 stock_list, 通过baostock接口下载数据, 并存入 date_folder 中
+#     """
+#     for item in stock_list:
+#         stock_market,stock_code = item.split(".")
+#         result = get_daily_from_baostock(stock_code,stock_market,start_datestr, end_datestr)
+#         data_dir = data_folder
+#         result.to_csv(os.path.join(data_dir,f"stock_{stock_code}.csv"),index = False)
+
+
 
 if __name__ == '__main__':
     main()
