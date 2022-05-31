@@ -13,9 +13,7 @@ import time
 
 
 
-stock_list = ["002468", "002241","603918", 
-              "000404", "002351","000909", 
-              "603628"]
+stock_list = ["002468", "002241","603918", "000404", "002351"]
 mailed_map = {}
 
 current_time = datetime.datetime.now()
