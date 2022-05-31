@@ -13,6 +13,9 @@ import baostock as bs
 import pandas as pd
 import tushare as ts
 import os
+import akshare as ak
+import datetime
+import time
 
 from .common_tools import  timing, datestr2int
     
@@ -138,7 +141,40 @@ def get_daily(stock_code,stock_market,start_datestr, end_datestr, frequency,
     return  df 
 
 
+
+def download_daily_data(stock_list, data_folder, start_datestr,end_datestr):
+    """
+    根据 stock_list, 通过baostock接口下载数据, 并存入 date_folder 中
+    """
+    for item in stock_list:
+        print(item)
+        try:
+            stock_market,stock_code = item.split(".")
+            result = get_daily_from_baostock(stock_code,stock_market,start_datestr, end_datestr)
+            data_dir = data_folder
+            result.to_csv(os.path.join(data_dir,f"stock_{stock_code}.csv"),index = False)
+        except:
+            print(f"can not get {item}")
+    pass
+
+
 #%%
+
+
+
+def get_current_state():    
+    """
+    通过akshare来获取数据
+    获取实时数据，返回时间貌似会慢慢递增,感觉不是很稳定。。
+    通常是5s左右，最大120s.
+    """
+    start_time = time.time()
+    stock_zh_a_spot_em_df = ak.stock_zh_a_spot_em()
+    now = datetime.datetime.now()
+    end_time = time.time()
+    query_elapse_time = end_time - start_time
+    return stock_zh_a_spot_em_df, now, query_elapse_time
+
 
 def main():
     start_datestr, end_datestr = "2020-01-01", "2022-05-28"
@@ -156,19 +192,9 @@ def main():
 
 # %%
 
-
-
-def download_daily_data(stock_list, data_folder, start_datestr,end_datestr):
-    """
-    根据 stock_list, 通过baostock接口下载数据, 并存入 date_folder 中
-    """
-    for item in stock_list:
-        stock_market,stock_code = item.split(".")
-        result = get_daily_from_baostock(stock_code,stock_market,start_datestr, end_datestr)
-        data_dir = data_folder
-        result.to_csv(os.path.join(data_dir,f"stock_{stock_code}.csv"),index = False)
-
-
+def main2():
+    stock_zh_a_spot_em_df, now, query_elapse_time = get_current_state()
+    print(stock_zh_a_spot_em_df)
 
 # def download_5minute_data(stock_list, data_folder, start_datestr,end_datestr):
 #     """
@@ -182,8 +208,14 @@ def download_daily_data(stock_list, data_folder, start_datestr,end_datestr):
 
 
 
+
+
+
+
+
+
 if __name__ == '__main__':
-    main()
+    main2()
 
 
 #%%

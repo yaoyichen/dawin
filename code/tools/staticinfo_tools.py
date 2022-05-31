@@ -3,9 +3,9 @@
 #%%
 import baostock as bs
 import pandas as pd
+from .download_tools import *
 
-
-def get_hs300_list():
+def get_stocklist(stock_type = "hs300"):
     """
     返回沪深300的指标股 
     """
@@ -16,16 +16,22 @@ def get_hs300_list():
     print('login respond  error_msg:'+lg.error_msg)
 
     # 获取沪深300成分股
-    rs = bs.query_hs300_stocks()
-    print('query_hs300 error_code:'+rs.error_code)
-    print('query_hs300  error_msg:'+rs.error_msg)
+    if(stock_type == "hs300"):
+        rs = bs.query_hs300_stocks()
+    elif(stock_type == "zz500"):
+        rs = bs.query_zz500_stocks()
+    elif(stock_type == "sz50"):
+        rs = bs.query_sz50_stocks()
+
+    print(f'query_{stock_type} error_code:'+rs.error_code)
+    print(f'query_{stock_type}  error_msg:'+rs.error_msg)
 
     # 打印结果集
-    hs300_stocks = []
+    stocks_list = []
     while (rs.error_code == '0') & rs.next():
         # 获取一条记录，将记录合并在一起
-        hs300_stocks.append(rs.get_row_data())
-    result = pd.DataFrame(hs300_stocks, columns=rs.fields)
+        stocks_list.append(rs.get_row_data())
+    result = pd.DataFrame(stocks_list, columns=rs.fields)
     
     # 结果集输出到csv文件
     # result.to_csv("D:/hs300_stocks.csv", encoding="gbk", index=False)
@@ -36,8 +42,12 @@ def get_hs300_list():
     return list(result["code"])
 
 
-# def test():
-result = get_hs300_list()
-    
+
+
+def test():
+    result = get_stocklist()
+    print(result)
+
+test()
     
 # %%

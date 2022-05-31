@@ -17,11 +17,17 @@ import pickle
 data_dir = "/home/yao/project/dawin/data/baostock_daily/hasvolume_data"
 
 #%%
-padding_span = 60
-shift_span = 21
-feature_span = 120
-target_span = 60
+# 最左边的多少个不取
+# padding_span: 左侧多少的数据不取，防止刚上市时候的不稳定
+# feature_span: 特征的周期
+# target_span: 希望考察的范围
 
+padding_span = 60
+shift_span = 10
+feature_span = 50
+target_span = 5
+
+#时间上前百分之多少的数据是训练集
 train_ratio = 0.7
 
 file_list = os.listdir(data_dir)

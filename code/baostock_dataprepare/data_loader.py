@@ -25,6 +25,7 @@ def feature_target_1(df, feature_start_index, target_start_index, target_end_ind
     """
     normalize input
     这个已经是在生成训练数据了
+    打label的条件如下
     """
     input_tensor = torch.tensor(np.asarray(df.iloc[feature_start_index: target_start_index]['close']), dtype = torch.float32)
     volume_tensor = torch.tensor(np.asarray(df.iloc[feature_start_index: target_start_index]['volume']), dtype = torch.float32)
@@ -124,15 +125,10 @@ class BaostockDailyDatasetTotalRead(Dataset):
         target_end_index = self.df_ref.iloc[index]["target_end_index"]
         
         start_index, end_index = self.index_map[data_file_name]
-        # print(start_index, end_index)
         
         df_data = self.df_all.loc[start_index: end_index]
-        # print("yes")
         df_data = df_data.reset_index(drop = True)
-        
         feature, target,weight = feature_target_1(df_data, feature_start_index, target_start_index, target_end_index)
-        
-        
         return feature, target ,weight
 
 
