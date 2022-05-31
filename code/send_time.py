@@ -45,5 +45,5 @@ while(1):
                 send_message.send_to_myself(subject = stock_code + ":" + news_public_time + ":" + news_title  ,
                                             content = ",".join([stock_code, news_title, news_content, news_public_time,  news_url]))
                 mailed_map[news_url] = 1
-    # 间隔5分钟发送
+    # 间隔10分钟发送
     time.sleep(600)
