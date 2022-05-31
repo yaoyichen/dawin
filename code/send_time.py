@@ -46,4 +46,4 @@ while(1):
                                             content = ",".join([stock_code, news_title, news_content, news_public_time,  news_url]))
                 mailed_map[news_url] = 1
     # 间隔5分钟发送
-    time.sleep(10)
+    time.sleep(600)
