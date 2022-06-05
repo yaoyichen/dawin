@@ -22,7 +22,6 @@ current_time = datetime.datetime.now()
 # 可以改变时间，用于测试用
 # current_time  = datetime.datetime(2022, 5, 29, 0, 0, 0)
 
-
 send_message = Send_Message()
 
 while(1):
