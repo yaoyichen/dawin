@@ -31,24 +31,28 @@ for index, file in enumerate(file_list[0:1000]):
     df["stock_code"] = file.split(".")[0].split("_")[1]
     df["increase"] = df['close']/df['open']
     df_next1 = df.shift(periods= -1)
+    
 
 
     df['next1_open'] = df_next1['open']
     df['next1_close'] = df_next1['close']
     df['label'] = df['next1_open']/df['open'] - 1
     df['label2'] = df['next1_close']/df['close'] - 1
-
+    df['next1_increase'] = df_next1['increase']
 
 
     df_pre1 = df.shift(periods = 1)
     df['p1_increase'] = df_pre1['increase']
     
+    
     df['ATR'] = df.ta.atr(length=20)
     df['RSI'] = df.ta.rsi()
     df['Average'] = df.ta.midprice(length=1) #midprice
-    df['MA5'] = df.ta.sma(length=5)
-    df['MA15'] = df.ta.sma(length=15)
-    df['MA60'] = df.ta.sma(length=60)
+    df['MA5'] =  ta.sma(df["close"], length = 5)
+    df['MA15'] = ta.sma(df["close"], length = 15)
+    df['MA60'] = ta.sma(df["close"], length = 60)
+    
+    df['volume_MA5'] = ta.sma(df["volume"], length = 5)
                   
     
     if(index == 0):
@@ -61,23 +65,28 @@ for index, file in enumerate(file_list[0:1000]):
 #%%
 df_all["MA15_ratio"]  =  (df_all['close'] - df_all['MA15'])/df_all['close']
 df_all["MA60_ratio"]  =  (df_all['close'] - df_all['MA60'])/df_all['close']
+df_all["volume_MA5_ratio"]  =  (df_all['volume'] - df_all['volume_MA5'])/df_all['volume_MA5']
+
+# 去除成交量为0
+df_all = df_all[df_all['volume'] !=0]
 
 
-df_train = df_all.dropna(subset = ["MA60",'label'])
+df_train = df_all.dropna(subset = ["MA60",'next1_increase'])
 df_train = df_train[(df_train['date'] >= "2017-01-01")  &  (df_train['date'] < "2022-03-01")]
 
-df_test = df_all.dropna(subset = ["MA60",'label'])
+df_test = df_all.dropna(subset = ["MA60",'increase'])
 df_test = df_test[(df_test['date'] >= "2022-03-01") &  (df_test['date'] <= "2022-06-02")]
 
 # select_features = ["ATR","RSI"]
-select_features = ["ATR","RSI","MA60_ratio","MA15_ratio"]
+select_features = ["ATR","RSI","MA60_ratio","MA15_ratio","volume_MA5_ratio"]
+select_label = ["next1_increase"]
 A_train = df_train[['date','stock_code','open']]
 X_train = df_train[select_features]
-y_trian = df_train[['label']]
+y_trian = df_train[select_label]
 
 A_test = df_test[['date','stock_code','open']]
 X_test = df_test[select_features]
-y_test = df_test[['label']]
+y_test = df_test[select_label]
 
 A_test.reset_index(drop = True, inplace = True)
 X_test.reset_index(drop = True, inplace = True)
@@ -97,22 +106,23 @@ predict_result_merge.columns = list(A_test.columns) +  list(X_test.columns) + li
 plt.scatter(np.asarray(y_test), y_pred, s = 1)
 
 # %%
-mean_error = np.mean(np.abs(predict_result_merge["predict"] - predict_result_merge["label"]))
+mean_error = np.mean(np.abs(predict_result_merge["predict"] - predict_result_merge[select_label[0]]))
 
 
 predict_list =  list(predict_result_merge["predict"])
 predict_list.sort(reverse = True)
-threshold_value = predict_list[int(0.01*len(predict_result_merge)) ]
+threshold_value = predict_list[int(0.0005*len(predict_result_merge)) ]
+
 
 predict_win_index_002 = predict_result_merge["predict"] > threshold_value
-gain_value = np.mean(predict_result_merge[predict_win_index_002]["label"])
-win_rate = np.mean(predict_result_merge[predict_win_index_002]["label"] > 0)
+gain_value = np.mean(predict_result_merge[predict_win_index_002][select_label[0]]) - 1
+win_rate = np.mean(predict_result_merge[predict_win_index_002][select_label[0]] >= 1.0)
 
 print(f"mean error:{mean_error:.4f}")
 print(f"threshold:{threshold_value:.4f},gain_value:{gain_value:.4f}, win_rate:{win_rate:.4f}")
-plt.scatter(predict_result_merge[predict_win_index_002]["label"],
+plt.scatter(predict_result_merge[predict_win_index_002][select_label[0]],
             predict_result_merge[predict_win_index_002]["predict"], s = 1 )
-plt.xlabel("label")
+plt.xlabel(select_label[0])
 plt.ylabel("predict")
 plt.grid()
 
