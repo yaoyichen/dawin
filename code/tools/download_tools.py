@@ -80,7 +80,8 @@ def get_daily_from_tushare_old(stock_code,stock_market,start_datestr, end_datest
 
 
 @timing
-def get_daily_from_baostock(stock_code,stock_market,start_datestr, end_datestr, frequency = "d"):
+def get_daily_from_baostock(stock_code,stock_market,start_datestr, end_datestr, frequency = "d",fields = 
+"date,open,close,high,low,volume"):
     """
     从baostock 获得历史数据
     不太确定最新输入在当天被更新的时间
@@ -90,7 +91,6 @@ def get_daily_from_baostock(stock_code,stock_market,start_datestr, end_datestr, 
     print('login respond error_code:'+lg.error_code)
     print('login respond  error_msg:'+lg.error_msg)
     
-    fields = "date,open,close,high,low,volume"
     
     query_code_name  = ".".join([stock_market, stock_code])
     
@@ -98,7 +98,7 @@ def get_daily_from_baostock(stock_code,stock_market,start_datestr, end_datestr, 
     # frequency：数据类型，默认为d，日k线；d=日k线、w=周、m=月、5=5分钟、15=15分钟、30=30分钟、60=60分钟k线数据，不区分大小写
     
     df_query = bs.query_history_k_data(query_code_name, fields, start_date = start_datestr,end_date = end_datestr, 
-        frequency= frequency)
+        frequency= frequency, adjustflag = "2")
     
     data_list = []
     while((df_query.error_code =="0") & df_query.next()):
@@ -142,7 +142,7 @@ def get_daily(stock_code,stock_market,start_datestr, end_datestr, frequency,
 
 
 
-def download_daily_data(stock_list, data_folder, start_datestr,end_datestr):
+def download_daily_data(stock_list, data_folder, start_datestr,end_datestr,fields):
     """
     根据 stock_list, 通过baostock接口下载数据, 并存入 date_folder 中
     """
@@ -150,7 +150,7 @@ def download_daily_data(stock_list, data_folder, start_datestr,end_datestr):
         print(item)
         try:
             stock_market,stock_code = item.split(".")
-            result = get_daily_from_baostock(stock_code,stock_market,start_datestr, end_datestr)
+            result = get_daily_from_baostock(stock_code,stock_market,start_datestr, end_datestr,fields = fields)
             data_dir = data_folder
             result.to_csv(os.path.join(data_dir,f"stock_{stock_code}.csv"),index = False)
         except:
