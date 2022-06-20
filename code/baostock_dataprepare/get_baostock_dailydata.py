@@ -21,9 +21,9 @@ def test1():
     stock_list = get_stocklist(stock_type= "a")
 
 
-    date_folder = "../../data/baostock_daily/20220619_download"
+    date_folder = "../../data/baostock_daily/20220620_download"
     start_datestr = "2019-01-01"
-    end_datestr = "2022-06-19"
+    end_datestr = "2022-06-20"
 
     print(stock_list)
     # for  index, stock_name  in enumerate(stock_list):

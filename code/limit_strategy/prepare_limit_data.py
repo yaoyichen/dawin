@@ -9,9 +9,11 @@ import matplotlib.pyplot as plt
 
 import xgboost as xgb
 import scipy
+import pickle
 
-
-data_dir = "../../data/baostock_daily/20220619_download/"
+date = "20220620"
+prefix = "predict3"
+data_dir = "../../data/baostock_daily/20220620_make/"
 
 
 file_list = os.listdir(data_dir)
@@ -19,6 +21,21 @@ file_list = os.listdir(data_dir)
 data_type = "300"
 data_type = "all"
 train_folds = 5
+
+
+select_label = ["next3_increase"]  
+
+
+
+turn_features =  ["turn", 'turn_MA3',"turn_MA3_ratio","turn_MA5_ratio","turn_MA10_ratio","turn_MA20_ratio",
+                  "turn_MA60_ratio","turn_MA3_5_ratio","turn_MA3_10_ratio"]
+    
+macd_features = ["macd_", "macd_f", "macd_s"]
+volume_features = ["EOM", "CMF"]
+
+select_features = ["MA5_ratio", "MA10_ratio", "MA20_ratio", "MA30_ratio",'bbb','bbp',"tail_up","ATR","RSI"] \
+    + turn_features + macd_features + volume_features
+# + volume_features
 
 
 def generate_feature(df):
@@ -101,8 +118,47 @@ def generate_feature(df):
     
     return df
 
+def second_fine(df_all):
+    df_all["MA5_ratio"]  =  (df_all['close'] - df_all['MA5'])/df_all['close']
+    df_all["MA10_ratio"]  =  (df_all['close'] - df_all['MA10'])/df_all['close']
+    df_all["MA20_ratio"]  =  (df_all['close'] - df_all['MA20'])/df_all['close']
+    df_all["MA30_ratio"]  =  (df_all['close'] - df_all['MA30'])/df_all['close']
+    df_all["MA60_ratio"]  =  (df_all['close'] - df_all['MA60'])/df_all['close']
+    
+    
+    df_all["turn_MA3_ratio"]  =  (df_all['turn'] - df_all['turn_MA3'])/df_all['turn']
+    df_all["turn_MA5_ratio"]  =  (df_all['turn'] - df_all['turn_MA5'])/df_all['turn']
+    df_all["turn_MA10_ratio"]  =  (df_all['turn'] - df_all['turn_MA10'])/df_all['turn']
+    df_all["turn_MA20_ratio"]  =  (df_all['turn'] - df_all['turn_MA20'])/df_all['turn']
+    df_all["turn_MA60_ratio"]  =  (df_all['turn'] - df_all['turn_MA60'])/df_all['turn']
+    
+    df_all["turn_MA3_5_ratio"]  =  (df_all['turn_MA3'] - df_all['turn_MA5'])/df_all['turn_MA3']
+    df_all["turn_MA3_10_ratio"]  =  (df_all['turn_MA3'] - df_all['turn_MA10'])/df_all['turn_MA3']
+    
+    
+    """
+    相比于前几天的量比增加量
+    """
+    df_all["volume_MA3_ratio"]  =  (df_all['volume'] - df_all['volume_MA3'])/df_all['volume_MA3']
+    df_all["volume_MA5_ratio"]  =  (df_all['volume'] - df_all['volume_MA5'])/df_all['volume_MA5']
+    
+    # 去除成交量为0
+    df_all = df_all[df_all['volume'] !=0]
+    df_all = df_all[df_all['volume_MA5'] >0 ]
+    df_all = df_all[df_all['volume_MA3'] >0 ]
+    df_all = df_all[df_all['turn_MA3'] >0]
+    df_all = df_all[df_all['turn'] > 0]
+    
+    df_all = df_all[df_all["volume_MA5_increase"] < 10]
+    df_all = df_all[df_all["MA5_increase"] < 10]
+    return df_all
+
+    
+ #%%
+
 result_list = []
-for i in range(train_folds):
+# for i in range(0,train_folds):
+for i in range(0,train_folds):
     df_all = pd.DataFrame()
     print(f"part:{i}")    
     """
@@ -164,62 +220,12 @@ for i in range(train_folds):
         
     
     #%%
-    def second_fine(df_all):
-        df_all["MA5_ratio"]  =  (df_all['close'] - df_all['MA5'])/df_all['close']
-        df_all["MA10_ratio"]  =  (df_all['close'] - df_all['MA10'])/df_all['close']
-        df_all["MA20_ratio"]  =  (df_all['close'] - df_all['MA20'])/df_all['close']
-        df_all["MA30_ratio"]  =  (df_all['close'] - df_all['MA30'])/df_all['close']
-        df_all["MA60_ratio"]  =  (df_all['close'] - df_all['MA60'])/df_all['close']
-        
-        
-        df_all["turn_MA3_ratio"]  =  (df_all['turn'] - df_all['turn_MA3'])/df_all['turn']
-        df_all["turn_MA5_ratio"]  =  (df_all['turn'] - df_all['turn_MA5'])/df_all['turn']
-        df_all["turn_MA10_ratio"]  =  (df_all['turn'] - df_all['turn_MA10'])/df_all['turn']
-        df_all["turn_MA20_ratio"]  =  (df_all['turn'] - df_all['turn_MA20'])/df_all['turn']
-        df_all["turn_MA60_ratio"]  =  (df_all['turn'] - df_all['turn_MA60'])/df_all['turn']
-        
-        df_all["turn_MA3_5_ratio"]  =  (df_all['turn_MA3'] - df_all['turn_MA5'])/df_all['turn_MA3']
-        df_all["turn_MA3_10_ratio"]  =  (df_all['turn_MA3'] - df_all['turn_MA10'])/df_all['turn_MA3']
-        
-        
-        # df_all["DCU_uppper"] = df['close'] > df_all["DCU"]
-        # df_all["DCU_lower"] = df['close'] - df_all["DCU"] 
-        
-        
-        """
-        相比于前几天的量比增加量
-        """
-        df_all["volume_MA3_ratio"]  =  (df_all['volume'] - df_all['volume_MA3'])/df_all['volume_MA3']
-        df_all["volume_MA5_ratio"]  =  (df_all['volume'] - df_all['volume_MA5'])/df_all['volume_MA5']
-        
-        # 去除成交量为0
-        df_all = df_all[df_all['volume'] !=0]
-        df_all = df_all[df_all['volume_MA5'] >0 ]
-        df_all = df_all[df_all['volume_MA3'] >0 ]
-        df_all = df_all[df_all['turn_MA3'] >0]
-        df_all = df_all[df_all['turn'] > 0]
-        
-        df_all = df_all[df_all["volume_MA5_increase"] < 10]
-        df_all = df_all[df_all["MA5_increase"] < 10]
-        return df_all
+   
     
     df_all = second_fine(df_all)
     
     
     #%%
-    select_label = ["next3_increase"]  
-    
-    turn_features =  ["turn", 'turn_MA3',"turn_MA3_ratio","turn_MA5_ratio","turn_MA10_ratio","turn_MA20_ratio",
-                      "turn_MA60_ratio","turn_MA3_5_ratio","turn_MA3_10_ratio"]
-        
-    macd_features = ["macd_", "macd_f", "macd_s"]
-    volume_features = ["EOM", "CMF"]
-    
-    select_features = ["MA5_ratio", "MA10_ratio", "MA20_ratio", "MA30_ratio",'bbb','bbp',"tail_up","ATR","RSI"] \
-        + turn_features + macd_features + volume_features
-    # + volume_features
-    
-    
     
     df_train = df_all.dropna(subset = ["MA60",select_label[0],"volume_MA5_increase","MA5_increase"])
     df_train = df_train.dropna(subset = select_features)
@@ -271,9 +277,16 @@ for i in range(train_folds):
     X_test.reset_index(drop = True, inplace = True)
     y_test.reset_index(drop = True, inplace = True)
     #%%
-    
+
     regressor = xgb.XGBRFRegressor(max_depth = 6)
     regressor.fit(X_train,y_trian )
+    
+    # save model to file 模型保存
+    pickle.dump(regressor, open(os.path.join("../../models/", f"{date}_{prefix}_model{i}.dat"), "wb"))
+     
+    # # load model from file 模型加载
+    # regressor = pickle.load(open("pima.pickle.dat", "rb"))
+
     
     # %%
     plt.figure(0)
@@ -353,171 +366,4 @@ for i in range(train_folds):
     
     
     
-    #%%
-    # tt = predict_result_merge[predict_result_merge["stock_code"] == 
-    # "000831"]
-    # plt.scatter(tt["increase"], tt["predict"])
-    # plt.xlabel("label")
-    # plt.ylabel("predict")
-    # plt.grid()
     
-    """
-    这份是做inference的代码
-    """
-    data_dir = "../../data/baostock_daily/20220619_download"
-    
-    first_data = 1
-    for index, file in enumerate(file_list[0:5000:1]):
-        # print(file)
-        if(not file.endswith(".csv")):
-            continue
-        stock_code = file.split("_")[1].split(".")[0]
-        
-        df = pd.read_csv(os.path.join(data_dir, file))
-        if(len(df) <= 60):
-            continue
-        
-        # print("000")
-        if(data_type =="300"):
-            if(not(( stock_code >= "300000")  and (stock_code < "399999") ) ):
-                continue
-        # print("100")
-        """
-        排除掉st股
-        """
-        if(df[["isST"]].values[-1][0] == 1):
-            continue
-        
-        df_today = df[-60::]
-        df_today = df_today.reset_index(drop = True )
-        df_today_feature = generate_feature(df_today)    
-        
-        
-        if(first_data == 1):
-            df_all_today = df_today_feature.loc[[59]]
-            first_data = 0
-            # print("0")
-        else:
-            df_all_today = pd.concat([df_all_today, df_today_feature.loc[[59]] ])
-            # print("1")
-            
-    df_all_today_refine = second_fine(df_all_today)
-        
-    
-    A_inference = df_all_today_refine[['date','stock_code','open']]
-    X_inference = df_all_today_refine[select_features]
-    
-    A_inference.reset_index(drop = True, inplace = True)
-    A_inference.reset_index(drop = True, inplace = True)
-    
-    y_pred = regressor.predict(X_inference)
-    y_pred_df = pd.DataFrame(y_pred, columns =[ "predict"]) 
-    predict_result_merge = pd.concat([A_inference,X_inference,y_pred_df],
-                                axis = 1, ignore_index = True )
-    predict_result_merge.columns = list(A_inference.columns) +  list(X_inference.columns) + list(y_pred_df.columns)
-    
-    #%%
-    result_list.append(predict_result_merge)
-
-# predict_win_index_002 = predict_result_merge["predict"] > 1.032
-
-# print(predict_result_merge[predict_win_index_002])
-
-
-# stock_zh_a_spot_em_df, now, query_elapse_time  = get_current_state()
-
-# result = pd.merge([predict_win_index_002, stock_zh_a_spot_em_df],
-#                   left_on= [], right_on= [], how = "inner")
-
-#%% 选择2个，各25%仓入, 月底要 6%收益。 
-# df_result1 = result_list[0]
-# df_result2 = result_list[1]
-# df_result3 = result_list[2]
-# df_result4 = result_list[3]
-# df_result5 = result_list[4] 
-
-"""
-threshold:1.0493,gain_value:0.0728, win_rate:0.8495
-threshold:1.0535,gain_value:0.0696, win_rate:0.8379
-threshold:1.0452,gain_value:0.0705, win_rate:0.8397
-threshold:1.0321,gain_value:0.0638, win_rate:0.7556
-threshold:1.0580,gain_value:0.0665, win_rate:0.7792
-
-"""
-
-#%%
-"""
-获得merge表， 
-"""
-import os
-os.sys.path.append("..")
-from tools.download_tools import *
-df_final = pd.merge(df_result1[["stock_code","predict"]] ,
-                    df_result2[["stock_code","predict"]] , 
-                   left_on= ["stock_code"], right_on= ["stock_code"], how = "inner" )
-
-
-df_final2 = pd.merge(df_final[["stock_code","predict_x","predict_y"]] ,
-                    df_result3[["stock_code","predict"]] , 
-                   left_on= ["stock_code"], right_on= ["stock_code"], how = "inner" )
-
-df_final2= df_final2.rename(columns = {"predict":"predict_z"})
-
-df_final3 = pd.merge(df_final2[["stock_code","predict_x","predict_y","predict_z"]] ,
-                    df_result4[["stock_code","predict"]] , 
-                   left_on= ["stock_code"], right_on= ["stock_code"], how = "inner" )
-
-df_final3= df_final3.rename(columns = {"predict":"predict_a"})
-
-
-df_final = pd.merge(df_final3[["stock_code","predict_x","predict_y","predict_z","predict_a"]] ,
-                    df_result5[["stock_code","predict"]] , 
-                   left_on= ["stock_code"], right_on= ["stock_code"], how = "inner" )
-# 
-# ["stock_code","predict_x","predict_y","predict_z","predict_a","predict"]
-#%%
-
-
-def merge_prediction_result(df_final,keep_columns = ["stock_code","predict"]):
-    stock_zh_a_spot_em_df, now, query_elapse_time  = get_current_state()
-    stock_zh_a_spot_em_df = stock_zh_a_spot_em_df[stock_zh_a_spot_em_df["最新价"] > 0]
-    stock_zh_a_spot_em_df = stock_zh_a_spot_em_df[~stock_zh_a_spot_em_df["名称"].str.contains("退")]
-    df_final_2022 = pd.merge(df_final[keep_columns] ,
-                        stock_zh_a_spot_em_df[["代码","名称"]] , 
-                        left_on= ["stock_code"], right_on= ["代码"], how = "inner" )
-    # df_final_2022["predict_mean"] = (df_final_2022["predict_x"] + df_final_2022["predict_x"] +  df_final_2022["predict_z"] +  \
-    #     df_final_2022["predict_a"] + df_final_2022["predict"])/5.0
-    return df_final_2022
-    
-result = merge_prediction_result(df_final, keep_columns = ["stock_code","predict"])
-df_final_2022.to_csv("20220619_3.csv", index = False)
-    
-#%%
-
-
-threshold = 1.01
-tt = df_final_2022[(df_final_2022["predict_x"] > threshold) & 
-              (df_final_2022["predict_y"] > threshold) &
-              (df_final_2022["predict_z"] > threshold) & 
-                (df_final_2022["predict_a"] > threshold) &
-                (df_final_2022["predict"] > threshold)  
-              ]
-
-print(list(tt["名称"]))
-
-
-result_sort = df_final_2022.sort_values(by = "predict_mean", ascending = False)
-print(list(result_sort[0:20]["名称"]))
-
-
-hand_list1 = ["东方财富","宁波精达","景嘉微","创识科技","四方精创","天阳科技","奥翔药业","美诺华"]
-# hand_list2 = ["创维数字","申通快递",]
-tt = result_sort[result_sort["名称"].isin(hand_list1) ]
-
-print(tt)
-
-#%%
-
-result_sort = result.sort_values(by = "predict", ascending = False)
-print(list(result_sort[0:20]["名称"]))
-
